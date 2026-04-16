@@ -70,7 +70,7 @@ type SlideItem  = SlidePromo | SlideAd;
 // ─────────────────────────────────────────────────────────────
 //  MODAL COTIZACIÓN
 // ─────────────────────────────────────────────────────────────
-function ModalCotizacion({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+function ModalCotizacion({ visible, onClose, waNum }: { visible: boolean; onClose: () => void; waNum: string }) {
   const [nombre,    setNombre]    = useState('');
   const [empresa,   setEmpresa]   = useState('');
   const [telefono,  setTelefono]  = useState('');
@@ -92,7 +92,7 @@ function ModalCotizacion({ visible, onClose }: { visible: boolean; onClose: () =
       `📦 Cantidad: ${cantidad || 'A consultar'}\n` +
       `📝 Detalle: ${detalle || 'Sin detalle adicional'}`
     );
-    const waUrl = `https://wa.me/51999000000?text=${msg}`;
+    const waUrl = `https://wa.me/${waNum}?text=${msg}`;
     Linking.openURL(waUrl).catch(() => {});
     onClose();
   };
@@ -398,6 +398,7 @@ export default function HomeScreen() {
   const flatListRef                       = useRef<FlatList>(null);
   const mapRef                            = useRef<any>(null);
   const [showCotizar, setShowCotizar]     = useState(false);
+  const [waContacto,  setWaContacto]      = useState('51999000000');
 
   // Triple-tap oculto en logo → Superadmin
   const tapCount  = useRef(0);
@@ -422,6 +423,14 @@ export default function HomeScreen() {
 
   // ← Hace scroll al tope cuando el usuario toca el tab "Inicio"
   useScrollToTop(flatListRef);
+
+  // Cargar número de WhatsApp de contacto desde la config del servidor
+  useEffect(() => {
+    fetch(API.appConfig)
+      .then(r => r.json())
+      .then(j => { if (j.ok && j.data?.contacto_whatsapp) setWaContacto(j.data.contacto_whatsapp); })
+      .catch(() => {});
+  }, []);
 
   const fetchTiendas = useCallback(async (isRefresh = false) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
@@ -586,6 +595,7 @@ export default function HomeScreen() {
       <ModalCotizacion
         visible={showCotizar}
         onClose={() => setShowCotizar(false)}
+        waNum={waContacto}
       />
     </View>
   );

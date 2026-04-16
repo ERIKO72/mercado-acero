@@ -14,12 +14,15 @@ type AppConfig = {
 
 async function fetchConfig(): Promise<AppConfig | null> {
   try {
-    const res  = await fetch(API.appConfig, { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5s máximo
+    const res  = await fetch(API.appConfig, { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeout);
     const json = await res.json();
     if (json.ok) return json.data as AppConfig;
     return null;
   } catch {
-    return null;
+    return null; // Si falla o timeout → app abre normal
   }
 }
 
