@@ -11,6 +11,7 @@ export const API = {
   logout:         `${API_BASE}/api/auth/logout`,
   forgotPassword: `${API_BASE}/api/auth/forgot-password`,
   resetPassword:  `${API_BASE}/api/auth/reset-password`,
+  verifyOtp:      `${API_BASE}/api/auth/verify-otp`,
   health:         `${API_BASE}/api/health`,
   // Endpoints admin (requieren JWT)
   adminTienda:    `${API_BASE}/api/admin/tienda`,

@@ -13,6 +13,10 @@ export default function LoginScreen() {
   const [password,    setPassword] = useState('');
   const [loading,     setLoading]  = useState(false);
   const [mostrarPass, setMostrar]  = useState(false);
+  // 2FA superadmin
+  const [requiere2fa, setRequiere2fa] = useState(false);
+  const [otp,         setOtp]         = useState('');
+  const [emailOtp,    setEmailOtp]    = useState('');
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -31,20 +35,55 @@ export default function LoginScreen() {
         Alert.alert('Acceso denegado', data.error || 'Credenciales incorrectas');
         return;
       }
-      await AsyncStorage.setItem('token',   data.token);
-      await AsyncStorage.setItem('usuario', JSON.stringify(data.usuario));
-      if (data.usuario?.nombre) {
-        await AsyncStorage.setItem('nombre', data.usuario.nombre);
+      // Superadmin requiere código 2FA
+      if (data.requiere2fa) {
+        setEmailOtp(data.email);
+        setRequiere2fa(true);
+        return;
       }
-      if (data.usuario?.rol === 'superadmin') {
-        router.replace('/screens/superadmin/dashboard');
-      } else {
-        router.replace('/screens/admin/dashboard');
-      }
+      await completarLogin(data);
     } catch {
       Alert.alert('Error de conexion', 'No se pudo conectar al servidor');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.length !== 6) {
+      Alert.alert('Código inválido', 'Ingresa el código de 6 dígitos');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res  = await fetch(API.verifyOtp, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: emailOtp, codigo: otp }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        Alert.alert('Código incorrecto', data.error || 'Intenta de nuevo');
+        return;
+      }
+      await completarLogin(data);
+    } catch {
+      Alert.alert('Error de conexion', 'No se pudo conectar al servidor');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completarLogin = async (data: any) => {
+    await AsyncStorage.setItem('token',   data.token);
+    await AsyncStorage.setItem('usuario', JSON.stringify(data.usuario));
+    if (data.usuario?.nombre) {
+      await AsyncStorage.setItem('nombre', data.usuario.nombre);
+    }
+    if (data.usuario?.rol === 'superadmin') {
+      router.replace('/screens/superadmin/dashboard');
+    } else {
+      router.replace('/screens/admin/dashboard');
     }
   };
 
@@ -66,7 +105,45 @@ export default function LoginScreen() {
           <Text style={styles.heroPanel}>Panel de Tienda</Text>
         </View>
 
-        {/* ── Formulario ── */}
+        {/* ── Formulario 2FA ── */}
+        {requiere2fa ? (
+          <View style={styles.card}>
+            <Text style={{ fontSize: 22, textAlign: 'center', marginBottom: 8 }}>🔐</Text>
+            <Text style={[styles.label, { fontSize: 16, textAlign: 'center', marginBottom: 4 }]}>Verificación de seguridad</Text>
+            <Text style={{ color: '#888', fontSize: 13, textAlign: 'center', marginBottom: 20 }}>
+              Se envió un código de 6 dígitos a {'\n'}<Text style={{ fontWeight: '700', color: '#333' }}>{emailOtp}</Text>
+            </Text>
+            <Text style={styles.label}>Código de acceso</Text>
+            <TextInput
+              style={[styles.input, { textAlign: 'center', fontSize: 28, letterSpacing: 12, fontWeight: '900' }]}
+              placeholder="000000"
+              placeholderTextColor="#ccc"
+              value={otp}
+              onChangeText={t => setOtp(t.replace(/[^0-9]/g, '').slice(0, 6))}
+              keyboardType="number-pad"
+              maxLength={6}
+              autoFocus
+            />
+            <TouchableOpacity
+              style={[styles.boton, loading && { opacity: 0.6 }]}
+              onPress={handleVerifyOtp}
+              disabled={loading}
+            >
+              {loading
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.botonText}>Verificar código</Text>
+              }
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ alignItems: 'center', marginTop: 16 }}
+              onPress={() => { setRequiere2fa(false); setOtp(''); }}
+            >
+              <Text style={{ color: '#999', fontSize: 13 }}>← Volver al login</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+
+        /* ── Formulario normal ── */
         <View style={styles.card}>
 
           <Text style={styles.label}>Correo electronico</Text>
@@ -137,6 +214,7 @@ export default function LoginScreen() {
             <Text style={styles.btnVolverText}>← Volver al inicio</Text>
           </TouchableOpacity>
         </View>
+        )} {/* fin ternario 2FA */}
 
         {/* ── Footer ── */}
         <Text style={styles.footer}>
