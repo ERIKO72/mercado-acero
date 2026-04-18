@@ -199,7 +199,7 @@ export default function LoginScreen() {
             style={{ alignItems: 'center', marginTop: 12 }}
             onPress={() => router.push('/screens/forgot-password')}
           >
-            <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13 }}>¿Olvidaste tu contraseña?</Text>
+            <Text style={{ color: COLORS.primary, fontSize: 13, fontWeight: '600' }}>¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
 
           <View style={styles.divider}>

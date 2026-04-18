@@ -1344,7 +1344,8 @@ export default function SuperAdminDashboard() {
     if (Platform.OS === 'web') {
       window.location.href = '/screens/login';
     } else {
-      router.replace('/screens/login');
+      router.dismissAll();
+      router.replace('/screens/login' as any);
     }
   };
 
