@@ -1341,9 +1341,11 @@ export default function SuperAdminDashboard() {
 
   const handleLogout = async () => {
     await AsyncStorage.multiRemove(['token', 'usuario', 'nombre']);
-    // setTimeout garantiza que la navegación ocurre después del ciclo actual
-    // router.replace funciona tanto en web como en móvil con Expo Router
-    setTimeout(() => router.replace('/screens/login'), 50);
+    if (typeof window !== 'undefined') {
+      window.location.href = '/screens/login';
+    } else {
+      router.replace('/screens/login');
+    }
   };
 
   if (loading) {
