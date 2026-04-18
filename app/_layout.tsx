@@ -161,6 +161,7 @@ export default function RootLayout() {
       <Stack.Screen name="screens/cubicadora"         options={{ headerShown: false }} />
       <Stack.Screen name="screens/forgot-password"    options={{ headerShown: false }} />
       <Stack.Screen name="screens/reset-password"     options={{ headerShown: false }} />
+      <Stack.Screen name="privacidad"                 options={{ title: 'Política de Privacidad', headerTintColor: '#C0392B' }} />
       <Stack.Screen name="screens/cotizacion"         options={{
         headerShown: true,
         headerTitle: 'Cotizador',
