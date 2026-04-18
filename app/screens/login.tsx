@@ -13,7 +13,9 @@ async function registrarPushToken(usuarioId: number, rol: string) {
   try {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== 'granted') return;
-    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    const token = (await Notifications.getExpoPushTokenAsync({
+      projectId: 'f59e2ae0-0c2d-4fc9-a52a-989b8593cd89',
+    })).data;
     await fetch(API.pushRegistrar, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
