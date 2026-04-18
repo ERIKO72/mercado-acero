@@ -6,7 +6,21 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { API, COLORS } from '../../constants/api';
+
+async function registrarPushToken(usuarioId: number, rol: string) {
+  try {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== 'granted') return;
+    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    await fetch(API.pushRegistrar, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ token, plataforma: Platform.OS, usuario_id: usuarioId, rol }),
+    });
+  } catch {}
+}
 
 export default function LoginScreen() {
   const [email,       setEmail]   = useState('');
@@ -81,6 +95,9 @@ export default function LoginScreen() {
       await AsyncStorage.setItem('nombre', data.usuario.nombre);
     }
     const esSuperadmin = data.usuario?.rol === 'superadmin';
+    if (Platform.OS !== 'web') {
+      registrarPushToken(data.usuario?.id, data.usuario?.rol);
+    }
     const destino = esSuperadmin ? '/screens/superadmin/dashboard' : '/screens/admin/dashboard';
     if (Platform.OS === 'web') {
       window.location.href = destino;

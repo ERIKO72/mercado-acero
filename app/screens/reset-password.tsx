@@ -12,6 +12,8 @@ export default function ResetPasswordScreen() {
   const [confirm,   setConfirm]   = useState('');
   const [loading,   setLoading]   = useState(false);
   const [listo,     setListo]     = useState(false);
+  const [verPass,   setVerPass]   = useState(false);
+  const [verConf,   setVerConf]   = useState(false);
 
   const handleReset = async () => {
     if (!password || password.length < 8) {
@@ -69,24 +71,34 @@ export default function ResetPasswordScreen() {
         ) : (
           <>
             <Text style={s.label}>Nueva contraseña</Text>
-            <TextInput
-              style={s.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Mínimo 8 caracteres"
-              placeholderTextColor="#AAA"
-              secureTextEntry
-            />
+            <View style={s.passRow}>
+              <TextInput
+                style={[s.input, s.passInput]}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Mínimo 8 caracteres"
+                placeholderTextColor="#AAA"
+                secureTextEntry={!verPass}
+              />
+              <TouchableOpacity style={s.ojoBtn} onPress={() => setVerPass(v => !v)}>
+                <Text style={s.ojoText}>{verPass ? 'Ocultar' : 'Ver'}</Text>
+              </TouchableOpacity>
+            </View>
 
             <Text style={s.label}>Confirmar contraseña</Text>
-            <TextInput
-              style={s.input}
-              value={confirm}
-              onChangeText={setConfirm}
-              placeholder="Repite la contraseña"
-              placeholderTextColor="#AAA"
-              secureTextEntry
-            />
+            <View style={s.passRow}>
+              <TextInput
+                style={[s.input, s.passInput]}
+                value={confirm}
+                onChangeText={setConfirm}
+                placeholder="Repite la contraseña"
+                placeholderTextColor="#AAA"
+                secureTextEntry={!verConf}
+              />
+              <TouchableOpacity style={s.ojoBtn} onPress={() => setVerConf(v => !v)}>
+                <Text style={s.ojoText}>{verConf ? 'Ocultar' : 'Ver'}</Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity style={s.btn} onPress={handleReset} disabled={loading}>
               {loading
@@ -111,6 +123,10 @@ const s = StyleSheet.create({
   card:          { flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 28 },
   label:         { fontSize: 13, fontWeight: '700', color: '#555', marginBottom: 8 },
   input:         { backgroundColor: '#F5F5F5', borderRadius: 12, borderWidth: 1.5, borderColor: '#E0E0E0', paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#1a1a1a', marginBottom: 20 },
+  passRow:       { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  passInput:     { flex: 1, marginBottom: 0 },
+  ojoBtn:        { backgroundColor: COLORS.secondary, borderRadius: 12, paddingHorizontal: 13, paddingVertical: 13, justifyContent: 'center' },
+  ojoText:       { color: '#fff', fontSize: 13, fontWeight: '600' },
   btn:           { backgroundColor: COLORS.primary, borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 8 },
   btnText:       { color: '#fff', fontWeight: '800', fontSize: 15 },
   successBox:    { alignItems: 'center', paddingTop: 20, gap: 16 },

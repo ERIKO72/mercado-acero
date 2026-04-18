@@ -42,6 +42,10 @@ export const API = {
   saReclamacion:      (id: string) => `${API_BASE}/api/superadmin/reclamaciones/${id}`,
   prospeccion:        `${API_BASE}/api/prospeccion`,
   appConfig:          `${API_BASE}/api/config`,
+  // Notificaciones push
+  pushRegistrar:      `${API_BASE}/api/notificaciones/registrar`,
+  pushSolicitud:      `${API_BASE}/api/notificaciones/solicitud`,
+  pushSolicitudes:    `${API_BASE}/api/notificaciones/solicitudes`,
   // Cotizaciones
   cotizacionCatalogo: `${API_BASE}/api/cotizaciones/catalogo`,
   cotizacionNueva:    `${API_BASE}/api/cotizaciones`,

@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Marketplace del Acero",
+    "slug": "marketplace-acero",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "marketplace-acero",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#C0392B"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.marketplaceacero.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Necesitamos tu ubicación para mostrarte las tiendas de acero más cercanas.",
+        "NSLocationAlwaysUsageDescription": "Necesitamos tu ubicación para mostrarte las tiendas de acero más cercanas."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#C0392B"
+      },
+      "package": "com.marketplaceacero.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permite acceso a tu ubicación para encontrar tiendas de acero cercanas."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

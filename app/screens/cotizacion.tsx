@@ -239,7 +239,7 @@ export default function CotizacionScreen() {
         </View>
 
         {/* Buscador de materiales */}
-        <View style={s.seccion}>
+        <View style={[s.seccion, { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}>
           <Text style={s.seccionTitulo}>AGREGAR MATERIAL</Text>
 
           {/* Categorías */}
@@ -289,7 +289,7 @@ export default function CotizacionScreen() {
 
         {/* Lista de items */}
         {items.length > 0 && (
-          <View style={s.seccion}>
+          <View style={[s.seccion, { borderTopWidth: 1, borderTopColor: '#f0f0f0', marginBottom: 12 }]}>
             <Text style={s.seccionTitulo}>MI LISTA ({items.length})</Text>
             {items.map((it, idx) => (
               <View key={idx} style={s.itemCard}>
@@ -365,11 +365,11 @@ const s = StyleSheet.create({
   root:            { flex: 1, backgroundColor: COLORS.bg },
   scroll:          { paddingBottom: 20 },
 
-  header:          { backgroundColor: COLORS.secondary, padding: 24, paddingTop: 50, alignItems: 'center' },
-  headerTitulo:    { color: '#fff', fontSize: 20, fontWeight: '900', letterSpacing: 1 },
-  headerSub:       { color: 'rgba(255,255,255,0.55)', fontSize: 13, marginTop: 4 },
+  header:          { backgroundColor: COLORS.secondary, padding: 10, paddingTop: 14, paddingBottom: 10, alignItems: 'center' },
+  headerTitulo:    { color: '#fff', fontSize: 15, fontWeight: '900', letterSpacing: 1 },
+  headerSub:       { color: 'rgba(255,255,255,0.55)', fontSize: 10, marginTop: 2 },
 
-  seccion:         { backgroundColor: '#fff', margin: 12, borderRadius: 16, padding: 16, elevation: 2 },
+  seccion:         { backgroundColor: '#fff', marginHorizontal: 12, marginTop: 0, marginBottom: 0, borderRadius: 0, padding: 16, elevation: 2 },
   seccionTitulo:   { fontSize: 11, fontWeight: '800', color: '#aaa', letterSpacing: 1.5, marginBottom: 12 },
 
   input:           {

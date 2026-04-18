@@ -4,7 +4,7 @@ import {
   StyleSheet, Alert, Linking, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
-import { COLORS } from '../../constants/api';
+import { COLORS, API } from '../../constants/api';
 
 const DISTRITOS = [
   'Ate', 'Callao', 'Los Olivos', 'San Martín de Porres', 'La Victoria',
@@ -27,11 +27,18 @@ export default function RegisterStore() {
 
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
-  const enviarWhatsApp = () => {
+  const enviarWhatsApp = async () => {
     if (!form.nombre.trim() || !form.telefono.trim() || !form.direccion.trim()) {
       Alert.alert('Campos requeridos', 'Nombre, teléfono y dirección son obligatorios');
       return;
     }
+
+    // Guardar solicitud en backend y disparar push al superadmin
+    fetch(API.pushSolicitud, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(form),
+    }).catch(() => {});
 
     const msg = [
       '🏪 *SOLICITUD DE REGISTRO — Marketplace del Acero*',

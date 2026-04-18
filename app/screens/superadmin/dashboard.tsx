@@ -840,11 +840,12 @@ type HeaderSAProps = {
   filtro: FiltroType;
   onFiltro: (f: FiltroType) => void;
   pendientes: TiendaPendiente[];
+  solicitudes: any[];
   token: string;
   onRefresh: () => void;
 };
 
-function HeaderSA({ resumen, query, onChangeQuery, onBuscar, onNueva, onReclamaciones, onProspectar, filtro, onFiltro, pendientes, token, onRefresh }: HeaderSAProps) {
+function HeaderSA({ resumen, query, onChangeQuery, onBuscar, onNueva, onReclamaciones, onProspectar, filtro, onFiltro, pendientes, solicitudes, token, onRefresh }: HeaderSAProps) {
 
   const aprobar = (p: TiendaPendiente) => {
     Alert.alert('✅ Aprobar tienda', `¿Aprobar "${p.nombre}"?\nAparecerá en el marketplace.`, [
@@ -1042,6 +1043,23 @@ function HeaderSA({ resumen, query, onChangeQuery, onBuscar, onNueva, onReclamac
               <TouchableOpacity style={styles.btnRechazar} onPress={() => rechazar(p)}>
                 <Text style={styles.btnRechazarText}>✕</Text>
               </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* ── Solicitudes WhatsApp nuevas ── */}
+      {solicitudes.length > 0 && (
+        <View style={[styles.pendientesWrap, { borderColor: '#27AE60' }]}>
+          <View style={[styles.pendientesHeader, { backgroundColor: '#27AE60' }]}>
+            <Text style={styles.pendientesHeaderText}>📲 Solicitudes por WhatsApp ({solicitudes.length})</Text>
+          </View>
+          {solicitudes.map((s: any) => (
+            <View key={s.id} style={styles.pendienteFila}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.pendienteNombre} numberOfLines={1}>{s.nombre}</Text>
+                <Text style={styles.pendienteSub}>{s.distrito || s.direccion} · {s.telefono}</Text>
+              </View>
             </View>
           ))}
         </View>
@@ -1264,6 +1282,7 @@ export default function SuperAdminDashboard() {
   const [showReclam,  setShowReclam]  = useState(false);
   const [showProsp,   setShowProsp]   = useState(false);
   const [pendientes,  setPendientes]  = useState<TiendaPendiente[]>([]);
+  const [solicitudes, setSolicitudes] = useState<any[]>([]);
 
   const tiendasFiltradas = tiendas.filter(t => {
     if (filtro === 'sin_verificar') return !t.verificada;
@@ -1284,12 +1303,16 @@ export default function SuperAdminDashboard() {
         router.replace('/screens/login');
         return;
       }
-      const rPend = await fetch(API.saPendientes, { headers: { Authorization: `Bearer ${tk}` } });
-      const [jT, jR, jP] = await Promise.all([rTiendas.json(), rResumen.json(), rPend.json()]);
+      const [rPend, rSol] = await Promise.all([
+        fetch(API.saPendientes,   { headers: { Authorization: `Bearer ${tk}` } }),
+        fetch(API.pushSolicitudes,{ headers: { Authorization: `Bearer ${tk}` } }),
+      ]);
+      const [jT, jR, jP, jS] = await Promise.all([rTiendas.json(), rResumen.json(), rPend.json(), rSol.json()]);
       if (jT.ok) setTiendas(jT.data);
       else Alert.alert('Error', jT.error || 'No se pudieron cargar las tiendas');
       if (jR.ok) setResumen(jR.data);
       if (jP.ok) setPendientes(jP.data);
+      if (jS.ok) setSolicitudes(jS.data);
     } catch (err: any) {
       Alert.alert('Error de conexión', 'Verifica que el servidor esté activo y actualiza la URL del túnel en api.ts');
     } finally {
@@ -1378,6 +1401,7 @@ export default function SuperAdminDashboard() {
             filtro={filtro}
             onFiltro={setFiltro}
             pendientes={pendientes}
+            solicitudes={solicitudes}
             token={token}
             onRefresh={() => cargar(token, query)}
           />
