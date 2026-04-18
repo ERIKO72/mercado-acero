@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Alert, ScrollView,
+  Alert, ScrollView, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -50,10 +50,10 @@ export default function DashboardScreen() {
     if (!data) { router.replace('/screens/login'); return; }
     const u = JSON.parse(data);
     if (u.rol === 'superadmin') {
-      if (typeof window !== 'undefined') {
+      if (Platform.OS === 'web') {
         window.location.href = '/screens/superadmin/dashboard';
       } else {
-        router.replace('/screens/superadmin/dashboard');
+        router.replace('/screens/superadmin/dashboard' as any);
       }
       return;
     }

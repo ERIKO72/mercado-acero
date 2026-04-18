@@ -1341,7 +1341,7 @@ export default function SuperAdminDashboard() {
 
   const handleLogout = async () => {
     await AsyncStorage.multiRemove(['token', 'usuario', 'nombre']);
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web') {
       window.location.href = '/screens/login';
     } else {
       router.replace('/screens/login');

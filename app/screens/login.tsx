@@ -81,10 +81,11 @@ export default function LoginScreen() {
       await AsyncStorage.setItem('nombre', data.usuario.nombre);
     }
     const esSuperadmin = data.usuario?.rol === 'superadmin';
-    if (typeof window !== 'undefined') {
-      window.location.href = esSuperadmin ? '/screens/superadmin/dashboard' : '/screens/admin/dashboard';
+    const destino = esSuperadmin ? '/screens/superadmin/dashboard' : '/screens/admin/dashboard';
+    if (Platform.OS === 'web') {
+      window.location.href = destino;
     } else {
-      router.replace(esSuperadmin ? '/screens/superadmin/dashboard' : '/screens/admin/dashboard');
+      router.replace(destino as any);
     }
   };
 
