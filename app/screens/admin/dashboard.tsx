@@ -49,6 +49,14 @@ export default function DashboardScreen() {
     const token = await AsyncStorage.getItem('token');
     if (!data) { router.replace('/screens/login'); return; }
     const u = JSON.parse(data);
+    if (u.rol === 'superadmin') {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/screens/superadmin/dashboard';
+      } else {
+        router.replace('/screens/superadmin/dashboard');
+      }
+      return;
+    }
     setUsuario(u);
     if (u.tienda_id && token) {
       try {
