@@ -132,7 +132,7 @@ export default function LoginScreen() {
             <Text style={{ fontSize: 22, textAlign: 'center', marginBottom: 8 }}>🔐</Text>
             <Text style={[styles.label, { fontSize: 16, textAlign: 'center', marginBottom: 4 }]}>Verificación de seguridad</Text>
             <Text style={{ color: '#888', fontSize: 13, textAlign: 'center', marginBottom: 20 }}>
-              Se envió un código de 6 dígitos a {'\n'}<Text style={{ fontWeight: '700', color: '#333' }}>{emailOtp}</Text>
+              Se envió un código de 6 dígitos al correo{'\n'}<Text style={{ fontWeight: '700', color: '#333' }}>{emailOtp}</Text>
             </Text>
             <Text style={styles.label}>Código de acceso</Text>
             <TextInput
