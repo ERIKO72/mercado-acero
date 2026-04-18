@@ -142,6 +142,12 @@ export default function LoginScreen() {
             >
               <Text style={{ color: '#999', fontSize: 13 }}>← Volver al login</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={{ alignItems: 'center', marginTop: 10 }}
+              onPress={() => router.push('/screens/forgot-password')}
+            >
+              <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>¿Problemas para acceder? Recuperar cuenta</Text>
+            </TouchableOpacity>
           </View>
         ) : (
 
