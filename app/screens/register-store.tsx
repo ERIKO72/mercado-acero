@@ -1,233 +1,154 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity,
-  StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform
+  StyleSheet, Alert, Linking, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Location from 'expo-location';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import MapaRegistro from '../../components/MapaRegistro';
-import { API, API_BASE, COLORS } from '../../constants/api';
+import { COLORS } from '../../constants/api';
 
 const DISTRITOS = [
-  // Zonas industriales / ferreterías
   'Ate', 'Callao', 'Los Olivos', 'San Martín de Porres', 'La Victoria',
   'Villa El Salvador', 'Comas', 'San Juan de Lurigancho', 'Independencia', 'Lurín',
   'Chorrillos', 'Villa María del Triunfo', 'Santa Anita', 'El Agustino',
   'Rímac', 'Breña', 'Cercado de Lima', 'Puente Piedra', 'Ventanilla',
   'Lince', 'Surquillo', 'San Juan de Miraflores', 'Carabayllo',
-  // Zonas mixtas
-  'La Molina', 'Surco', 'Jesús María',
-  // Zonas residenciales (pocas tiendas del rubro)
-  'San Borja', 'San Isidro', 'Miraflores',
-  'Otro',
+  'La Molina', 'Surco', 'Jesús María', 'San Borja', 'San Isidro', 'Miraflores', 'Otro',
 ];
 
+const WA_ADMIN = '51933019619';
+
 export default function RegisterStore() {
-  const [loading, setLoading]         = useState(false);
-  const [mostrarPass, setMostrarPass] = useState(false);
   const [form, setForm] = useState({
-    // Tienda
-    nombre: '', descripcion: '', ruc: '', telefono: '', email: '',
-    direccion: '', distrito: '', horario: 'Lun-Sab 8am-6pm',
-    latitud: -12.0464, longitud: -77.0428,
-    // Cuenta del dueño
-    dueno_nombre: '', dueno_email: '', dueno_password: '',
+    nombre: '', descripcion: '', ruc: '', telefono: '',
+    email: '', direccion: '', distrito: '', horario: 'Lun-Sab 8am-6pm',
+    contacto: '',
   });
+  const [enviado, setEnviado] = useState(false);
 
-  const set = (key: string, val: any) => setForm(f => ({ ...f, [key]: val }));
+  const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
-  const usarMiUbicacion = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { Alert.alert('Permiso denegado'); return; }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      set('latitud', loc.coords.latitude);
-      set('longitud', loc.coords.longitude);
-    } catch { Alert.alert('Error', 'No se pudo obtener la ubicacion'); }
+  const enviarWhatsApp = () => {
+    if (!form.nombre.trim() || !form.telefono.trim() || !form.direccion.trim()) {
+      Alert.alert('Campos requeridos', 'Nombre, teléfono y dirección son obligatorios');
+      return;
+    }
+
+    const msg = [
+      '🏪 *SOLICITUD DE REGISTRO — Marketplace del Acero*',
+      '',
+      `📌 *Tienda:* ${form.nombre}`,
+      form.descripcion ? `📝 *Descripción:* ${form.descripcion}` : '',
+      form.ruc        ? `🔢 *RUC:* ${form.ruc}` : '',
+      `📞 *Teléfono:* ${form.telefono}`,
+      form.email      ? `📧 *Email:* ${form.email}` : '',
+      `📍 *Dirección:* ${form.direccion}`,
+      form.distrito   ? `🗺️ *Distrito:* ${form.distrito}` : '',
+      `🕐 *Horario:* ${form.horario}`,
+      form.contacto   ? `👤 *Contacto:* ${form.contacto}` : '',
+      '',
+      '✅ Solicito ser registrado en el Marketplace del Acero.',
+    ].filter(Boolean).join('\n');
+
+    const url = `https://wa.me/${WA_ADMIN}?text=${encodeURIComponent(msg)}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert('Error', 'No se pudo abrir WhatsApp')
+    );
+    setEnviado(true);
   };
 
-  const enviar = async () => {
-    // Validaciones
-    if (!form.nombre || !form.telefono || !form.direccion) {
-      Alert.alert('Campos requeridos', 'Nombre, telefono y direccion son obligatorios');
-      return;
-    }
-    if (!form.dueno_email || !form.dueno_password || !form.dueno_nombre) {
-      Alert.alert('Cuenta requerida', 'Completa los datos de tu cuenta (nombre, email y contrasena)');
-      return;
-    }
-    if (form.dueno_password.length < 6) {
-      Alert.alert('Contrasena corta', 'La contrasena debe tener al menos 6 caracteres');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Paso 1: Crear la tienda
-      const resTienda = await fetch(`${API_BASE}/api/tiendas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre:      form.nombre,
-          descripcion: form.descripcion,
-          ruc:         form.ruc,
-          telefono:    form.telefono,
-          email:       form.email,
-          direccion:   form.direccion,
-          distrito:    form.distrito,
-          horario:     form.horario,
-          latitud:     form.latitud,
-          longitud:    form.longitud,
-        }),
-      });
-      const jsonTienda = await resTienda.json();
-      if (!jsonTienda.ok) {
-        Alert.alert('Error', jsonTienda.error || 'No se pudo registrar la tienda');
-        return;
-      }
-
-      const tienda_id = jsonTienda.data.id;
-
-      // Paso 2: Crear cuenta del dueño vinculada a la tienda
-      const resCuenta = await fetch(API.register, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre:    form.dueno_nombre,
-          email:     form.dueno_email,
-          password:  form.dueno_password,
-          tienda_id: tienda_id,
-        }),
-      });
-      const jsonCuenta = await resCuenta.json();
-      if (!resCuenta.ok) {
-        Alert.alert('Tienda creada, pero...', jsonCuenta.error || 'No se pudo crear la cuenta. Intenta registrarte desde login.');
-        router.back();
-        return;
-      }
-
-      // Paso 3: Auto-login — guardar token y usuario
-      await AsyncStorage.setItem('token', jsonCuenta.token);
-      await AsyncStorage.setItem('usuario', JSON.stringify(jsonCuenta.usuario));
-
-      Alert.alert(
-        'Todo listo!',
-        'Tu tienda y cuenta fueron creadas. Ahora puedes gestionar tu tienda.',
-        [{ text: 'Ir al panel', onPress: () => router.replace('/screens/admin/dashboard') }]
-      );
-    } catch {
-      Alert.alert('Error', 'No se pudo conectar al servidor');
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (enviado) {
+    return (
+      <View style={s.successWrap}>
+        <Text style={s.successIcon}>✅</Text>
+        <Text style={s.successTitulo}>¡Solicitud enviada!</Text>
+        <Text style={s.successTexto}>
+          Tu información fue enviada por WhatsApp al administrador.{'\n'}
+          Te contactaremos para completar tu registro.
+        </Text>
+        <TouchableOpacity style={s.btnVolver} onPress={() => router.replace('/')}>
+          <Text style={s.btnVolverText}>Volver al inicio</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
+      <ScrollView style={s.container} keyboardShouldPersistTaps="handled">
+
+        {/* Header */}
+        <View style={s.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.back}>Volver</Text>
+            <Text style={s.back}>← Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Registrar mi tienda</Text>
+          <Text style={s.title}>Registrar mi tienda</Text>
+          <Text style={s.subtitle}>Completa el formulario y te contactaremos</Text>
         </View>
 
-        <View style={styles.form}>
+        <View style={s.form}>
 
-          {/* ── DATOS DE LA TIENDA ── */}
-          <Text style={styles.seccion}>Datos de la tienda</Text>
+          <View style={s.infoBox}>
+            <Text style={s.infoText}>
+              📲 Al enviar, tus datos llegarán por WhatsApp al administrador quien registrará tu tienda y te dará acceso al panel.
+            </Text>
+          </View>
 
-          <Text style={styles.label}>Nombre *</Text>
-          <TextInput style={styles.input} value={form.nombre}
-            onChangeText={v => set('nombre', v)} placeholder="Ej: Aceros del Norte"
-            placeholderTextColor={COLORS.textLight} />
+          {/* Datos de la tienda */}
+          <Text style={s.seccion}>Datos de la tienda</Text>
 
-          <Text style={styles.label}>Descripcion</Text>
-          <TextInput style={[styles.input, { height: 70, textAlignVertical: 'top' }]}
+          <Text style={s.label}>Nombre de la tienda *</Text>
+          <TextInput style={s.input} value={form.nombre} onChangeText={v => set('nombre', v)}
+            placeholder="Ej: Aceros del Norte" placeholderTextColor={COLORS.textLight} />
+
+          <Text style={s.label}>Descripción</Text>
+          <TextInput style={[s.input, { height: 70, textAlignVertical: 'top' }]}
             value={form.descripcion} onChangeText={v => set('descripcion', v)}
-            placeholder="Que vendes o haces?" placeholderTextColor={COLORS.textLight} multiline />
+            placeholder="¿Qué vendes o fabricas?" placeholderTextColor={COLORS.textLight} multiline />
 
-          <Text style={styles.label}>RUC</Text>
-          <TextInput style={styles.input} value={form.ruc} onChangeText={v => set('ruc', v)}
+          <Text style={s.label}>RUC</Text>
+          <TextInput style={s.input} value={form.ruc} onChangeText={v => set('ruc', v)}
             placeholder="20xxxxxxxxx" placeholderTextColor={COLORS.textLight} keyboardType="numeric" />
 
-          <Text style={styles.label}>Telefono *</Text>
-          <TextInput style={styles.input} value={form.telefono} onChangeText={v => set('telefono', v)}
-            placeholder="01-xxx-xxxx" placeholderTextColor={COLORS.textLight} keyboardType="phone-pad" />
+          <Text style={s.label}>Teléfono de la tienda *</Text>
+          <TextInput style={s.input} value={form.telefono} onChangeText={v => set('telefono', v)}
+            placeholder="999 999 999" placeholderTextColor={COLORS.textLight} keyboardType="phone-pad" />
 
-          <Text style={styles.label}>Email de la tienda</Text>
-          <TextInput style={styles.input} value={form.email} onChangeText={v => set('email', v)}
+          <Text style={s.label}>Email de la tienda</Text>
+          <TextInput style={s.input} value={form.email} onChangeText={v => set('email', v)}
             placeholder="tienda@ejemplo.com" placeholderTextColor={COLORS.textLight}
             keyboardType="email-address" autoCapitalize="none" />
 
-          <Text style={styles.label}>Direccion *</Text>
-          <TextInput style={styles.input} value={form.direccion} onChangeText={v => set('direccion', v)}
+          <Text style={s.label}>Dirección *</Text>
+          <TextInput style={s.input} value={form.direccion} onChangeText={v => set('direccion', v)}
             placeholder="Av. Industrial 123" placeholderTextColor={COLORS.textLight} />
 
-          <Text style={styles.label}>Distrito</Text>
-          <View style={styles.tags}>
+          <Text style={s.label}>Distrito</Text>
+          <View style={s.tags}>
             {DISTRITOS.map(d => (
-              <TouchableOpacity key={d} style={[styles.tag, form.distrito === d && styles.tagActive]}
+              <TouchableOpacity key={d} style={[s.tag, form.distrito === d && s.tagActive]}
                 onPress={() => set('distrito', d)}>
-                <Text style={[styles.tagText, form.distrito === d && styles.tagTextActive]}>{d}</Text>
+                <Text style={[s.tagText, form.distrito === d && s.tagTextActive]}>{d}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={styles.label}>Ubica tu tienda en el mapa</Text>
-          <MapaRegistro latitud={form.latitud} longitud={form.longitud}
-            onChange={(lat, lng) => { set('latitud', lat); set('longitud', lng); }} />
-          <TouchableOpacity style={styles.btnGPS} onPress={usarMiUbicacion}>
-            <Text style={styles.btnGPSText}>Usar mi ubicacion actual</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.label}>Horario</Text>
-          <TextInput style={styles.input} value={form.horario} onChangeText={v => set('horario', v)}
+          <Text style={s.label}>Horario de atención</Text>
+          <TextInput style={s.input} value={form.horario} onChangeText={v => set('horario', v)}
             placeholder="Lun-Sab 8am-6pm" placeholderTextColor={COLORS.textLight} />
 
-          {/* ── CUENTA DEL DUEÑO ── */}
-          <Text style={[styles.seccion, { marginTop: 28 }]}>Cuenta del administrador</Text>
-          <Text style={styles.seccionSub}>Con estos datos podras ingresar al panel de gestion</Text>
+          <Text style={s.label}>Nombre de contacto</Text>
+          <TextInput style={s.input} value={form.contacto} onChangeText={v => set('contacto', v)}
+            placeholder="Tu nombre completo" placeholderTextColor={COLORS.textLight} />
 
-          <Text style={styles.label}>Tu nombre *</Text>
-          <TextInput style={styles.input} value={form.dueno_nombre}
-            onChangeText={v => set('dueno_nombre', v)} placeholder="Nombre completo"
-            placeholderTextColor={COLORS.textLight} />
-
-          <Text style={styles.label}>Email de acceso *</Text>
-          <TextInput style={styles.input} value={form.dueno_email}
-            onChangeText={v => set('dueno_email', v)} placeholder="correo@ejemplo.com"
-            placeholderTextColor={COLORS.textLight} keyboardType="email-address" autoCapitalize="none" />
-
-          <Text style={styles.label}>Contrasena * (min. 6 caracteres)</Text>
-          <View style={styles.passRow}>
-            <TextInput
-              style={[styles.input, styles.passInput]}
-              value={form.dueno_password}
-              onChangeText={v => set('dueno_password', v)}
-              placeholder="Minimo 6 caracteres"
-              placeholderTextColor={COLORS.textLight}
-              secureTextEntry={!mostrarPass}
-            />
-            <TouchableOpacity style={styles.passOjo} onPress={() => setMostrarPass(v => !v)}>
-              <Text style={styles.passOjoTexto}>{mostrarPass ? 'Ocultar' : 'Ver'}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.btnEnviar, loading && { opacity: 0.6 }]}
-            onPress={enviar}
-            disabled={loading}
-          >
-            {loading
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.btnEnviarText}>Registrar tienda y crear cuenta</Text>
-            }
+          {/* Botón enviar */}
+          <TouchableOpacity style={s.btnEnviar} onPress={enviarWhatsApp}>
+            <Text style={s.btnEnviarText}>📲 Enviar solicitud por WhatsApp</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push('/screens/login')}>
-            <Text style={styles.linkLogin}>Ya tengo cuenta — Iniciar sesion</Text>
+          <TouchableOpacity onPress={() => router.push('/screens/login')} style={{ alignItems: 'center', marginTop: 16, marginBottom: 40 }}>
+            <Text style={{ color: COLORS.secondary, fontSize: 13, textDecorationLine: 'underline' }}>
+              Ya tengo cuenta — Iniciar sesión
+            </Text>
           </TouchableOpacity>
 
         </View>
@@ -236,35 +157,29 @@ export default function RegisterStore() {
   );
 }
 
-const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: COLORS.bg },
-  header:       { backgroundColor: COLORS.secondary, padding: 20, paddingTop: 54 },
-  back:         { color: '#ffffff99', fontSize: 14, marginBottom: 8 },
-  title:        { color: '#fff', fontSize: 22, fontWeight: '800' },
-  form:         { padding: 16 },
-  seccion:      { fontSize: 13, fontWeight: '800', color: COLORS.secondary,
-                  textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, marginTop: 8 },
-  seccionSub:   { fontSize: 12, color: COLORS.textLight, marginBottom: 12 },
-  label:        { fontSize: 12, color: COLORS.textLight, fontWeight: '600', marginBottom: 5, marginTop: 12 },
-  input:        { backgroundColor: '#fff', borderRadius: 8, padding: 11, fontSize: 14,
-                  color: COLORS.text, borderWidth: 1, borderColor: COLORS.border },
-  tags:         { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  tag:          { backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
-                  borderWidth: 1, borderColor: COLORS.border },
-  tagActive:    { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  tagText:      { fontSize: 12, color: COLORS.text },
-  tagTextActive:{ color: '#fff', fontWeight: '700' },
-  btnGPS:       { backgroundColor: COLORS.accent, borderRadius: 8, padding: 10,
-                  alignItems: 'center', marginTop: 8, marginBottom: 4 },
-  btnGPSText:   { color: '#fff', fontWeight: '600', fontSize: 13 },
-  passRow:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  passInput:    { flex: 1, marginBottom: 0 },
-  passOjo:      { backgroundColor: COLORS.secondary, borderRadius: 8, paddingHorizontal: 12,
-                  paddingVertical: 12, marginTop: 0 },
-  passOjoTexto: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  btnEnviar:    { backgroundColor: COLORS.primary, borderRadius: 10, padding: 16,
-                  alignItems: 'center', marginTop: 28, marginBottom: 12 },
-  btnEnviarText:{ color: '#fff', fontWeight: '800', fontSize: 16 },
-  linkLogin:    { textAlign: 'center', color: COLORS.secondary, fontSize: 13,
-                  marginBottom: 40, textDecorationLine: 'underline' },
+const s = StyleSheet.create({
+  container:      { flex: 1, backgroundColor: COLORS.bg },
+  header:         { backgroundColor: COLORS.secondary, padding: 20, paddingTop: 54 },
+  back:           { color: '#ffffff99', fontSize: 14, marginBottom: 8 },
+  title:          { color: '#fff', fontSize: 22, fontWeight: '800' },
+  subtitle:       { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 4 },
+  form:           { padding: 16 },
+  infoBox:        { backgroundColor: '#E8F4FD', borderRadius: 12, padding: 14, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: COLORS.verified },
+  infoText:       { fontSize: 13, color: '#1a5276', lineHeight: 20 },
+  seccion:        { fontSize: 13, fontWeight: '800', color: COLORS.secondary, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, marginTop: 8 },
+  label:          { fontSize: 12, color: COLORS.textLight, fontWeight: '600', marginBottom: 5, marginTop: 12 },
+  input:          { backgroundColor: '#fff', borderRadius: 8, padding: 11, fontSize: 14, color: COLORS.text, borderWidth: 1, borderColor: COLORS.border },
+  tags:           { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4, marginTop: 4 },
+  tag:            { backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: COLORS.border },
+  tagActive:      { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  tagText:        { fontSize: 12, color: COLORS.text },
+  tagTextActive:  { color: '#fff', fontWeight: '700' },
+  btnEnviar:      { backgroundColor: '#25D366', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 28, marginBottom: 12 },
+  btnEnviarText:  { color: '#fff', fontWeight: '800', fontSize: 16 },
+  successWrap:    { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: '#fff' },
+  successIcon:    { fontSize: 64, marginBottom: 16 },
+  successTitulo:  { fontSize: 22, fontWeight: '900', color: COLORS.secondary, marginBottom: 12 },
+  successTexto:   { fontSize: 15, color: '#555', textAlign: 'center', lineHeight: 24, marginBottom: 28 },
+  btnVolver:      { backgroundColor: COLORS.secondary, borderRadius: 12, padding: 16, alignItems: 'center', width: '100%' },
+  btnVolverText:  { color: '#fff', fontWeight: '800', fontSize: 15 },
 });
