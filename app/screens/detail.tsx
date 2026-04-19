@@ -80,10 +80,9 @@ export default function DetailScreen() {
   const abrirWaze = () => {
     if (!tienda) return;
     trackear(tienda.id, 'waze');
-    const url = `waze://?ll=${tienda.latitud},${tienda.longitud}&navigate=yes`;
-    Linking.canOpenURL(url).then(can =>
-      Linking.openURL(can ? url : `https://waze.com/ul?ll=${tienda.latitud},${tienda.longitud}&navigate=yes`)
-    );
+    const wazeApp = `waze://?ll=${tienda.latitud},${tienda.longitud}&navigate=yes`;
+    const wazeWeb = `https://ul.waze.com/ul?ll=${tienda.latitud}%2C${tienda.longitud}&navigate=yes&zoom=17`;
+    Linking.openURL(wazeApp).catch(() => Linking.openURL(wazeWeb));
   };
 
   const abrirMaps = () => {

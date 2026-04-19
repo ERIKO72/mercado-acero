@@ -38,6 +38,15 @@
         }
       }
     },
+    "android": {
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [{ "scheme": "waze" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
     "plugins": [
       [
         "expo-notifications",
