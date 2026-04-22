@@ -1,4 +1,4 @@
-export const API_BASE = 'https://marketplace-acero-backend-production.up.railway.app';
+export const API_BASE = 'https://marketplace-acero-backend-production-fd38.up.railway.app';
 
 // Endpoints públicos
 export const API = {
@@ -55,7 +55,7 @@ export const API = {
 // ── Demo / Trial ──────────────────────────────────────────
 // Pon null para desactivar el bloqueo (producción definitiva)
 // Cambia la fecha para extender el período de prueba
-export const TRIAL_UNTIL: string | null = '2026-04-19'; // 7 días desde 2026-04-12
+export const TRIAL_UNTIL: string | null = '2026-12-31'; // extendido hasta publicación en Play Store
 
 // ── Identidad Markel Play ──────────────────────────────────
 export const APP_NAME    = 'MARKETPLACE DEL ACERO';
