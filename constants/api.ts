@@ -50,6 +50,9 @@ export const API = {
   cotizacionCatalogo: `${API_BASE}/api/cotizaciones/catalogo`,
   cotizacionNueva:    `${API_BASE}/api/cotizaciones`,
   cotizacionHistorial:(tel: string) => `${API_BASE}/api/cotizaciones/historial/${tel}`,
+  // Puntos de servicio (corte láser, doblez, soldadura)
+  puntosServicio:     `${API_BASE}/api/puntos-servicio`,
+  puntoServicio:      (id: string) => `${API_BASE}/api/puntos-servicio/${id}`,
 };
 
 // ── Demo / Trial ──────────────────────────────────────────

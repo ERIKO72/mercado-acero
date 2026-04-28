@@ -79,6 +79,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="servicios"
+        options={{
+          title: 'Servicios',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="⚡" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="cotizar"
         options={{
           title: 'Cotizar',
