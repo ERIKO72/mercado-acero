@@ -1,11 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, FlatList, TouchableOpacity,
-  StyleSheet, ActivityIndicator, RefreshControl, Alert, Linking,
+  StyleSheet, ActivityIndicator, RefreshControl, Alert, Linking, ScrollView,
 } from 'react-native';
 import { useScrollToTop } from '@react-navigation/native';
 import { API, COLORS } from '../../constants/api';
 import { useLocation } from '../../hooks/useLocation';
+
+const DISTRITOS = [
+  'Todos', 'Ate', 'Callao', 'Cercado de Lima', 'Comas',
+  'El Agustino', 'Independencia', 'La Victoria', 'Los Olivos',
+  'Lurín', 'Puente Piedra', 'Rímac', 'San Juan de Lurigancho',
+  'San Martín de Porres', 'Santa Anita', 'Ventanilla',
+  'Villa El Salvador', 'Villa María del Triunfo',
+];
 
 // ─────────────────────────────────────────────────────────────
 //  Tipos de servicio disponibles
@@ -132,18 +140,20 @@ export default function ServiciosScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [query,      setQuery]      = useState('');
   const [tipo,       setTipo]       = useState<TipoServicio>('todos');
+  const [distrito,   setDistrito]   = useState('Todos');
 
   const fetchPuntos = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (tipo !== 'todos') params.set('tipo', tipo);
-      if (query.trim())     params.set('q', query.trim());
+      if (tipo !== 'todos')     params.set('tipo', tipo);
+      if (query.trim())         params.set('q', query.trim());
+      if (distrito !== 'Todos') params.set('distrito', distrito);
       if (location) {
         params.set('lat',   String(location.latitude));
         params.set('lng',   String(location.longitude));
-        params.set('radio', '30');
+        params.set('radio', '50');
       }
       const url = `${API.puntosServicio}?${params}`;
       const res  = await fetch(url);
@@ -155,7 +165,7 @@ export default function ServiciosScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [tipo, query, location]);
+  }, [tipo, query, distrito, location]);
 
   useEffect(() => { fetchPuntos(); }, [fetchPuntos]);
 
@@ -195,7 +205,7 @@ export default function ServiciosScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Chips de filtro */}
+            {/* Chips tipo de servicio */}
             <View style={s.filtros}>
               {TIPOS.map(t => (
                 <TouchableOpacity
@@ -208,6 +218,22 @@ export default function ServiciosScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+
+            {/* Chips de distrito */}
+            <View style={s.distritoWrap}>
+              <Text style={s.distritoLabel}>📍 Distrito</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {DISTRITOS.map(d => (
+                  <TouchableOpacity
+                    key={d}
+                    style={[s.distChip, distrito === d && s.distChipActive]}
+                    onPress={() => setDistrito(d)}
+                  >
+                    <Text style={[s.distText, distrito === d && s.distTextActive]}>{d}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
 
             {/* Contador */}
@@ -265,6 +291,12 @@ const s = StyleSheet.create({
   filtroTextActive: { color: '#fff' },
   resultLabel:    { backgroundColor: '#F9F9F9', paddingHorizontal: 14, paddingVertical: 8, borderBottomWidth: 1, borderColor: '#EBEBEB' },
   resultText:     { fontSize: 12, color: '#999', fontWeight: '600' },
+  distritoWrap:   { backgroundColor: '#fff', paddingHorizontal: 12, paddingTop: 8, paddingBottom: 10, borderBottomWidth: 1, borderColor: '#eee' },
+  distritoLabel:  { fontSize: 11, fontWeight: '700', color: '#AAA', marginBottom: 6 },
+  distChip:       { backgroundColor: '#F0F0F0', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginRight: 6, borderWidth: 1.5, borderColor: '#E0E0E0' },
+  distChipActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  distText:       { fontSize: 12, color: '#666', fontWeight: '600' },
+  distTextActive: { color: '#fff', fontWeight: '700' },
   list:           { padding: 10, paddingTop: 8 },
   empty:          { alignItems: 'center', paddingTop: 50, gap: 12 },
   emptyIcon:      { fontSize: 48 },
