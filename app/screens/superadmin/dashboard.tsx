@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity,
   ActivityIndicator, Alert, Modal, ScrollView, Switch, Platform,
@@ -316,13 +316,15 @@ type Prospecto = {
   horario: string; distrito: string;
 };
 
-function ProspeccionModal({ visible, token, onRegistrar, onClose }: {
+function ProspeccionModal({ visible, token, tipo = 'tienda', onRegistrar, onClose }: {
   visible: boolean; token: string;
+  tipo?: 'tienda' | 'servicio';
   onRegistrar: (p: Prospecto) => Promise<void>;
   onClose: () => void;
 }) {
+  const terminoDefault = tipo === 'servicio' ? 'taller corte laser doblez soldadura metalúrgico' : 'distribuidores acero ferretería';
   const [distrito,     setDistrito]     = useState('Ate');
-  const [termino,      setTermino]      = useState('distribuidores acero ferretería');
+  const [termino,      setTermino]      = useState(terminoDefault);
   const [resultados,   setResultados]   = useState<Prospecto[]>([]);
   const [buscando,     setBuscando]     = useState(false);
   const [buscado,      setBuscado]      = useState(false);
@@ -339,7 +341,7 @@ function ProspeccionModal({ visible, token, onRegistrar, onClose }: {
     setDescartadas(new Set());
     setResultados([]);
     try {
-      const url = `${API.prospeccion}?distrito=${encodeURIComponent(distrito)}&q=${encodeURIComponent(termino)}`;
+      const url = `${API.prospeccion}?distrito=${encodeURIComponent(distrito)}&q=${encodeURIComponent(termino)}&tipo=${tipo}`;
       const res  = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
@@ -359,7 +361,7 @@ function ProspeccionModal({ visible, token, onRegistrar, onClose }: {
           <TouchableOpacity onPress={onClose} style={pros.backBtn}>
             <Text style={pros.backText}>← Cerrar</Text>
           </TouchableOpacity>
-          <Text style={pros.headerTitle}>🔍 Prospectar Tiendas</Text>
+          <Text style={pros.headerTitle}>{tipo === 'servicio' ? '⚡ Prospectar Servicios' : '🔍 Prospectar Tiendas'}</Text>
           <View style={{ width: 60 }} />
         </View>
 
@@ -397,7 +399,7 @@ function ProspeccionModal({ visible, token, onRegistrar, onClose }: {
             </TouchableOpacity>
           </View>
           <Text style={pros.hint}>
-            Buscará: "{termino} {distrito} Lima Peru" en Google Maps
+            {`Buscará: "${termino} ${distrito} Lima Peru" en Google Maps`}
           </Text>
         </View>
 
@@ -837,6 +839,7 @@ type HeaderSAProps = {
   onNueva: () => void;
   onReclamaciones: () => void;
   onProspectar: () => void;
+  onProspectarServicio: () => void;
   filtro: FiltroType;
   onFiltro: (f: FiltroType) => void;
   pendientes: TiendaPendiente[];
@@ -845,7 +848,7 @@ type HeaderSAProps = {
   onRefresh: () => void;
 };
 
-function HeaderSA({ resumen, query, onChangeQuery, onBuscar, onNueva, onReclamaciones, onProspectar, filtro, onFiltro, pendientes, solicitudes, token, onRefresh }: HeaderSAProps) {
+function HeaderSA({ resumen, query, onChangeQuery, onBuscar, onNueva, onReclamaciones, onProspectar, onProspectarServicio, filtro, onFiltro, pendientes, solicitudes, token, onRefresh }: HeaderSAProps) {
 
   const aprobar = (p: TiendaPendiente) => {
     Alert.alert('✅ Aprobar tienda', `¿Aprobar "${p.nombre}"?\nAparecerá en el marketplace.`, [
@@ -978,6 +981,13 @@ function HeaderSA({ resumen, query, onChangeQuery, onBuscar, onNueva, onReclamac
         >
           <Text style={styles.moduloIcono}>🔍</Text>
           <Text style={styles.moduloLabel}>Prospectar{'\n'}Tiendas</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.moduloBtn, { borderColor: '#E67E22' }]}
+          onPress={onProspectarServicio}
+        >
+          <Text style={styles.moduloIcono}>⚡</Text>
+          <Text style={styles.moduloLabel}>Prospectar{'\n'}Servicios</Text>
         </TouchableOpacity>
       </View>
 
@@ -1280,7 +1290,8 @@ export default function SuperAdminDashboard() {
   const [showEdit,    setShowEdit]    = useState(false);
   const [showNueva,   setShowNueva]   = useState(false);
   const [showReclam,  setShowReclam]  = useState(false);
-  const [showProsp,   setShowProsp]   = useState(false);
+  const [showProsp,     setShowProsp]     = useState(false);
+  const [showProspServ, setShowProspServ] = useState(false);
   const [pendientes,  setPendientes]  = useState<TiendaPendiente[]>([]);
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
 
@@ -1313,7 +1324,7 @@ export default function SuperAdminDashboard() {
       if (jR.ok) setResumen(jR.data);
       if (jP.ok) setPendientes(jP.data);
       if (jS.ok) setSolicitudes(jS.data);
-    } catch (err: any) {
+    } catch {
       Alert.alert('Error de conexión', 'Verifica que el servidor esté activo y actualiza la URL del túnel en api.ts');
     } finally {
       setLoading(false);
@@ -1367,7 +1378,6 @@ export default function SuperAdminDashboard() {
     if (Platform.OS === 'web') {
       window.location.href = '/screens/login';
     } else {
-      router.dismissAll();
       router.replace('/screens/login' as any);
     }
   };
@@ -1398,6 +1408,7 @@ export default function SuperAdminDashboard() {
             onNueva={() => setShowNueva(true)}
             onReclamaciones={() => setShowReclam(true)}
             onProspectar={() => setShowProsp(true)}
+            onProspectarServicio={() => setShowProspServ(true)}
             filtro={filtro}
             onFiltro={setFiltro}
             pendientes={pendientes}
@@ -1453,8 +1464,34 @@ export default function SuperAdminDashboard() {
       </TouchableOpacity>
 
       <ProspeccionModal
+        visible={showProspServ}
+        token={token}
+        tipo="servicio"
+        onClose={() => setShowProspServ(false)}
+        onRegistrar={async (p) => {
+          const res = await fetch(API.puntosServicioAdmin, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              nombre:    p.nombre,
+              distrito:  p.distrito,
+              telefono:  (p.telefono || '').replace(/[\s+]/g, ''),
+              direccion: p.direccion,
+              latitud:   p.lat,
+              longitud:  p.lng,
+              horario:   p.horario || 'Lun-Sab 8am-6pm',
+              tipos_servicio: [],
+            }),
+          });
+          const json = await res.json();
+          if (!json.ok) throw new Error(json.error || 'Error al registrar');
+        }}
+      />
+
+      <ProspeccionModal
         visible={showProsp}
         token={token}
+        tipo="tienda"
         onClose={() => setShowProsp(false)}
         onRegistrar={async (p) => {
           let res: Response;
