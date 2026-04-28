@@ -2,7 +2,7 @@
   "expo": {
     "name": "Marketplace del Acero",
     "slug": "marketplace-acero",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "scheme": "marketplaceacero",
     "userInterfaceStyle": "light",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#C0392B"
+      "backgroundColor": "#6B0F2A"
     },
     "web": {
       "bundler": "metro",
@@ -18,40 +18,45 @@
       "favicon": "./assets/images/favicon.png"
     },
     "android": {
-      "package": "com.eimahr.marketplaceacero",
-      "versionCode": 2,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "waze"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
+        "backgroundColor": "#6B0F2A",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "permissions": [
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.INTERNET",
-        "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS"
-      ],
+      "package": "com.armanditomh.marketplaceacero",
+      "versionCode": 4,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyD55Qk5pry9baZ0WkRJOrX9VZx1DGHRGYU"
         }
-      }
-    },
-    "android": {
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "data": [{ "scheme": "waze" }],
-          "category": ["BROWSABLE", "DEFAULT"]
-        }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "plugins": [
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
+          "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#C0392B",
           "sounds": []
         }
@@ -65,9 +70,16 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "f59e2ae0-0c2d-4fc9-a52a-989b8593cd89"
+        "projectId": "69397dc2-fe9c-4648-84ce-07f4c5029786"
       }
     },
-    "owner": "eriko72"
+    "owner": "armanditomh",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/69397dc2-fe9c-4648-84ce-07f4c5029786"
+    },
+    "ios": {}
   }
 }
